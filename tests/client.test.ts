@@ -1,5 +1,5 @@
 import z from "zod";
-import { initApiClient, ApiSchema, dynamicResource } from "../src/client";
+import { initApiClient, ApiSchema, dynamicRoute } from "../src/client";
 import { GET, POST, PUT } from "../src/helpers";
 
 describe("ApiClient", () => {
@@ -136,8 +136,8 @@ describe("ApiClient", () => {
 	});
 });
 
-describe("Dynamic Resource Filling", () => {
-	it("fills dynamic resource paths correctly", async () => {
+describe("Dynamic Route Filling", () => {
+	it("fills dynamic route paths correctly", async () => {
 		// Mock fetch globally
 		global.fetch = jest.fn(() =>
 			Promise.resolve({
@@ -150,7 +150,7 @@ describe("Dynamic Resource Filling", () => {
 
 		const api = {
 			posts: {
-				postId: dynamicResource(z.string()).with({
+				postId: dynamicRoute(z.string()).with({
 					comments: {
 						get: GET<{ comments: string[] }>(),
 					},
@@ -160,14 +160,14 @@ describe("Dynamic Resource Filling", () => {
 
 		initApiClient(api, "http://example.com/api");
 
-		const filledResource = api.posts.postId("789");
-		filledResource.comments.get;
+		const filledRoute = api.posts.postId("789");
+		filledRoute.comments.get;
 
-		expect(filledResource.comments.get.url).toBe(
+		expect(filledRoute.comments.get.url).toBe(
 			"http://example.com/api/posts/789/comments",
 		);
 
-		const res = await filledResource.comments.get();
+		const res = await filledRoute.comments.get();
 		const data = await res.json();
 
 		const call = (global.fetch as jest.Mock).mock.calls[0];

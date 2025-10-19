@@ -1,5 +1,5 @@
 import z from "zod";
-import { ApiSchema, dynamicResource, initApiClient } from "./src/client";
+import { ApiSchema, dynamicRoute, initApiClient } from "./src/client";
 import { GET, POST } from "./src/helpers";
 
 const api = {
@@ -11,7 +11,7 @@ const api = {
 			post: POST<{ name: string }, z.ZodObject<{ id: z.ZodString }>>({
 				bodySchema: z.object({ id: z.string() }),
 			}),
-			id: dynamicResource(z.number()).with({
+			id: dynamicRoute(z.number()).with({
 				comments: {
 					get: GET<{ comments: string[] }>(),
 				},

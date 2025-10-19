@@ -1,4 +1,4 @@
-// goal: api.resource(dynamicRoute).create(data)
+// goal: api.route(dynamicRoute).create(data)
 
 import { ZodType } from "zod";
 import { finalizeEndpoint, Endpoint, isEndpoint } from "./endpoint";
@@ -10,9 +10,9 @@ export function initApiClient<TSchema extends ApiSchema>(
 	populateUrls(schema, baseUrl);
 }
 
-function populateUrls(resource: any, baseUrl: string) {
-	for (const key in resource) {
-		const item = resource[key];
+function populateUrls(route: any, baseUrl: string) {
+	for (const key in route) {
+		const item = route[key];
 
 		if (item instanceof ZodType) {
 			continue; // Skip Zod schemas
@@ -22,15 +22,15 @@ function populateUrls(resource: any, baseUrl: string) {
 			"Populating URL for:",
 			key,
 			baseUrl,
-			isUnfilledDynamicResource(item),
+			isUnfilledDynamicRoute(item),
 		);
 
 		if (isEndpoint(item)) {
 			item.url = baseUrl;
-			resource[key] = finalizeEndpoint(item);
-		} else if (isUnfilledDynamicResource(item)) {
-			console.log("Populating dynamic resource:", key, baseUrl);
-			resource[key] = finalizeDynamicResource(item, baseUrl);
+			route[key] = finalizeEndpoint(item);
+		} else if (isUnfilledDynamicRoute(item)) {
+			console.log("Populating dynamic route:", key, baseUrl);
+			route[key] = finalizeDynamicRoute(item, baseUrl);
 		} else if (typeof item === "object" && item !== null) {
 			populateUrls(item, `${baseUrl}/${key}`);
 		} else {
@@ -40,94 +40,94 @@ function populateUrls(resource: any, baseUrl: string) {
 }
 
 export interface ApiSchema {
-	[resource: string]: Resource;
+	[route: string]: Route;
 }
 
-export type Resource = {
+export type Route = {
 	[subroute: string]:
-		| Resource
-		| UnfilledDynamicResource<any, any>
+		| Route
+		| UnfilledDynamicRoute<any, any>
 		| Endpoint<any, any, any>
 		| ZodType;
 };
 
-export type UnfilledDynamicResource<
-	TResource extends Resource,
+export type UnfilledDynamicRoute<
+	TRoute extends Route,
 	TSchema extends ZodType,
 > = {
-	[subroute: string]: TResource[string] | TSchema;
-	dynamicResourceSchema: TSchema;
-	(path: TSchema["_zod"]["input"]): TResource;
+	[subroute: string]: TRoute[string] | TSchema;
+	dynamicRouteSchema: TSchema;
+	(path: TSchema["_zod"]["input"]): TRoute;
 };
 
-function fillDynamicResource<
-	TResource extends Resource,
+function fillDynamicRoute<
+	TRoute extends Route,
 	TSchema extends ZodType,
 >(
-	resource: UnfilledDynamicResource<TResource, TSchema>,
+	route: UnfilledDynamicRoute<TRoute, TSchema>,
 	dynamicPath: TSchema["_zod"]["input"],
 	baseUrl: string,
-): TResource {
-	const filledResource: TResource = {
-		...resource,
-	} as unknown as TResource;
+): TRoute {
+	const filledRoute: TRoute = {
+		...route,
+	} as unknown as TRoute;
 
-	populateUrls(filledResource, `${baseUrl}/${dynamicPath}`);
+	populateUrls(filledRoute, `${baseUrl}/${dynamicPath}`);
 
-	return filledResource;
+	return filledRoute;
 }
 
-export class PartialDynamicResource<TSchema extends ZodType> {
+export class PartialDynamicRoute<TSchema extends ZodType> {
 	constructor(private readonly schema: TSchema) {}
 
-	with<TResource extends Resource>(
-		resource: TResource,
-	): UnfilledDynamicResource<TResource, TSchema> {
+	with<TRoute extends Route>(
+		route: TRoute,
+	): UnfilledDynamicRoute<TRoute, TSchema> {
 		return {
-			...resource,
-			dynamicResourceSchema: this.schema,
-		} as unknown as UnfilledDynamicResource<TResource, TSchema>;
+			...route,
+			dynamicRouteSchema: this.schema,
+		} as unknown as UnfilledDynamicRoute<TRoute, TSchema>;
 	}
 }
 
-export function dynamicResource<TSchema extends ZodType>(schema: TSchema) {
-	return new PartialDynamicResource<TSchema>(schema);
+export function dynamicRoute<TSchema extends ZodType>(schema: TSchema) {
+	return new PartialDynamicRoute<TSchema>(schema);
 }
 
-function finalizeDynamicResource<
-	TResource extends Resource,
+function finalizeDynamicRoute<
+	TRoute extends Route,
 	TSchema extends ZodType,
 >(
-	resource: UnfilledDynamicResource<TResource, TSchema>,
+	route: UnfilledDynamicRoute<TRoute, TSchema>,
 	baseUrl: string,
-): Resource {
+): Route {
 	function fill(
-		this: UnfilledDynamicResource<TResource, TSchema>,
+		this: UnfilledDynamicRoute<TRoute, TSchema>,
 		dynamicPath: TSchema["_zod"]["input"],
 	) {
-		return fillDynamicResource(
-			resource as UnfilledDynamicResource<TResource, TSchema>,
+		return fillDynamicRoute(
+			route as UnfilledDynamicRoute<TRoute, TSchema>,
 			dynamicPath,
 			baseUrl,
 		);
 	}
 
-	const dynamicResource = {
-		...resource,
-	} as UnfilledDynamicResource<TResource, TSchema>;
+	const dynamicRoute = {
+		...route,
+	} as UnfilledDynamicRoute<TRoute, TSchema>;
 
-	const dynamicResourceWithFunction = fill.bind(dynamicResource);
+	const dynamicRouteWithFunction = fill.bind(dynamicRoute);
 
-	Object.assign(dynamicResourceWithFunction, dynamicResource);
+	Object.assign(dynamicRouteWithFunction, dynamicRoute);
 
-	return dynamicResourceWithFunction as unknown as UnfilledDynamicResource<
-		TResource,
+	return dynamicRouteWithFunction as unknown as UnfilledDynamicRoute<
+		TRoute,
 		TSchema
 	>;
 }
 
-function isUnfilledDynamicResource(
+function isUnfilledDynamicRoute(
 	obj: any,
-): obj is UnfilledDynamicResource<any, any> {
-	return obj.dynamicResourceSchema instanceof ZodType;
+): obj is UnfilledDynamicRoute<any, any> {
+	return obj.dynamicRouteSchema instanceof ZodType;
 }
