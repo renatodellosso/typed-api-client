@@ -8,8 +8,8 @@
 		"build": "tsc & tsc --declaration",
 		"test": "jest --passWithNoTests",
 		"lint": "eslint . --max-warnings=0",
-		"prettier-fix": "prettier --write ./**/*.{js,json,ts}",
-		"prettier-check": "prettier --check ./**/*.{js,json,ts}"
+		"prettier-fix": "prettier --write ./src/**/*.ts",
+		"prettier-check": "prettier --check ./src/**/*.ts}"
 	},
 	"repository": {
 		"type": "git",
