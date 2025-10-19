@@ -162,7 +162,7 @@ describe("Dynamic Resource Filling", () => {
 
 		const apiSchema = {
 			posts: {
-				postId: dynamicResource(z.string(), {
+				postId: dynamicResource(z.string()).with({
 					comments: {
 						get: GET<{ comments: string[] }>(),
 					},

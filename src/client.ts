@@ -53,50 +53,67 @@ export interface ApiSchema {
 export type Resource = {
 	[subroute: string]:
 		| Resource
-		| UnfilledDynamicResource<any>
+		| UnfilledDynamicResource<any, any>
 		| Endpoint<any, any, any>
 		| ZodType;
 };
 
-export type UnfilledDynamicResource<TResource extends Resource> = {
-	[subroute: string]: TResource[string] | ZodType;
-	dynamicResourceSchema: ZodType;
-	(path: string): TResource;
+export type UnfilledDynamicResource<
+	TResource extends Resource,
+	TSchema extends ZodType,
+> = {
+	[subroute: string]: TResource[string] | TSchema;
+	dynamicResourceSchema: TSchema;
+	(path: TSchema["_zod"]["input"]): TResource;
 };
 
-function fillDynamicResource<TResource extends Resource>(
-	resource: UnfilledDynamicResource<TResource>,
-	dynamicPath: string,
+function fillDynamicResource<
+	TResource extends Resource,
+	TSchema extends ZodType,
+>(
+	resource: UnfilledDynamicResource<TResource, TSchema>,
+	dynamicPath: TSchema["_zod"]["input"],
 	baseUrl: string,
 ): TResource {
 	const filledResource: TResource = {
 		...resource,
 	} as unknown as TResource;
 
-	delete filledResource.dynamic;
-
 	populateUrls(filledResource, `${baseUrl}/${dynamicPath}`);
 
 	return filledResource;
 }
 
-export function dynamicResource<TResource extends Resource>(
-	schema: ZodType,
-	resource: TResource,
-): UnfilledDynamicResource<TResource> {
-	return {
-		...resource,
-		dynamicResourceSchema: schema,
-	} as unknown as UnfilledDynamicResource<TResource>;
+export class PartialDynamicResource<TSchema extends ZodType> {
+	constructor(private readonly schema: TSchema) {}
+
+	with<TResource extends Resource>(
+		resource: TResource,
+	): UnfilledDynamicResource<TResource, TSchema> {
+		return {
+			...resource,
+			dynamicResourceSchema: this.schema,
+		} as unknown as UnfilledDynamicResource<TResource, TSchema>;
+	}
 }
 
-function finalizeDynamicResource<TResource extends Resource>(
-	resource: UnfilledDynamicResource<TResource>,
+export function dynamicResource<TSchema extends ZodType>(schema: TSchema) {
+	return new PartialDynamicResource<TSchema>(schema);
+}
+
+function finalizeDynamicResource<
+	TResource extends Resource,
+	TSchema extends ZodType,
+>(
+	resource: UnfilledDynamicResource<TResource, TSchema>,
 	baseUrl: string,
 ): Resource {
-	function fill(this: UnfilledDynamicResource<TResource>, dynamicPath: string) {
+	function fill(
+		this: UnfilledDynamicResource<TResource, TSchema>,
+		dynamicPath: TSchema["_zod"]["input"],
+	) {
 		return fillDynamicResource(
-			resource as UnfilledDynamicResource<TResource>,
+			resource as UnfilledDynamicResource<TResource, TSchema>,
 			dynamicPath,
 			baseUrl,
 		);
@@ -104,17 +121,20 @@ function finalizeDynamicResource<TResource extends Resource>(
 
 	const dynamicResource = {
 		...resource,
-	} as UnfilledDynamicResource<TResource>;
+	} as UnfilledDynamicResource<TResource, TSchema>;
 
 	const dynamicResourceWithFunction = fill.bind(dynamicResource);
 
 	Object.assign(dynamicResourceWithFunction, dynamicResource);
 
-	return dynamicResourceWithFunction as unknown as UnfilledDynamicResource<TResource>;
+	return dynamicResourceWithFunction as unknown as UnfilledDynamicResource<
+		TResource,
+		TSchema
+	>;
 }
 
 function isUnfilledDynamicResource(
 	obj: any,
-): obj is UnfilledDynamicResource<any> {
+): obj is UnfilledDynamicResource<any, any> {
 	return obj.dynamicResourceSchema instanceof ZodType;
 }

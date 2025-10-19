@@ -1,5 +1,5 @@
 import z from "zod";
-import { ApiClient, ApiSchema } from "./src/client";
+import { ApiClient, ApiSchema, dynamicResource } from "./src/client";
 import { GET, POST } from "./src/helpers";
 
 const apiSchema = {
@@ -8,11 +8,14 @@ const apiSchema = {
 			get: GET<{ name: string }, z.ZodString>({
 				searchParamSchema: z.string(),
 			}),
-			post: POST<{ name: string }, z.ZodObject<{ id: z.ZodString }>, undefined>(
-				{
-					bodySchema: z.object({ id: z.string() }),
+			post: POST<{ name: string }, z.ZodObject<{ id: z.ZodString }>>({
+				bodySchema: z.object({ id: z.string() }),
+			}),
+			id: dynamicResource(z.number()).with({
+				comments: {
+					get: GET<{ comments: string[] }>(),
 				},
-			),
+			}),
 		},
 	},
 } satisfies ApiSchema;
@@ -32,3 +35,5 @@ res.then(async (response) => {
 });
 
 const schema = apiSchema.user.profile.post.bodySchema;
+
+api.user.profile.id(123);
