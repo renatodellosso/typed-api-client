@@ -1,9 +1,9 @@
-import { ZodObject } from "zod";
+import { ZodType } from "zod";
 import { createUnfinalizedEndpoint, Endpoint } from "./endpoint";
 
 export function GET<
 	TReturn,
-	TSearchParamSchema extends ZodObject | undefined = undefined,
+	TSearchParamSchema extends ZodType | undefined = undefined,
 >(config?: {
 	searchParamSchema?: TSearchParamSchema;
 }): Endpoint<TReturn, undefined, TSearchParamSchema> {
@@ -16,8 +16,8 @@ export function GET<
 
 export function POST<
 	TReturn,
-	TBodySchema extends ZodObject | undefined = undefined,
-	TSearchParamSchema extends ZodObject | undefined = undefined,
+	TBodySchema extends ZodType | undefined = undefined,
+	TSearchParamSchema extends ZodType | undefined = undefined,
 >(config?: {
 	bodySchema?: TBodySchema;
 	searchParamSchema?: TSearchParamSchema;
@@ -31,8 +31,8 @@ export function POST<
 
 export function PUT<
 	TReturn,
-	TBodySchema extends ZodObject | undefined = undefined,
-	TSearchParamSchema extends ZodObject | undefined = undefined,
+	TBodySchema extends ZodType | undefined = undefined,
+	TSearchParamSchema extends ZodType | undefined = undefined,
 >(config?: {
 	bodySchema?: TBodySchema;
 	searchParamSchema?: TSearchParamSchema;
@@ -46,8 +46,8 @@ export function PUT<
 
 export function DELETE<
 	TReturn,
-	TBodySchema extends ZodObject | undefined = undefined,
-	TSearchParamSchema extends ZodObject | undefined = undefined,
+	TBodySchema extends ZodType | undefined = undefined,
+	TSearchParamSchema extends ZodType | undefined = undefined,
 >(config?: {
 	bodySchema?: TBodySchema;
 	searchParamSchema?: TSearchParamSchema;

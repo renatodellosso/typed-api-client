@@ -155,7 +155,8 @@ describe("Dynamic Resource Filling", () => {
 			Promise.resolve({
 				ok: true,
 				status: 200,
-				json: () => Promise.resolve({ comments: ["Great post!", "Thanks for sharing."] }),
+				json: () =>
+					Promise.resolve({ comments: ["Great post!", "Thanks for sharing."] }),
 			} as Response),
 		) as jest.Mock;
 
@@ -187,9 +188,7 @@ describe("Dynamic Resource Filling", () => {
 		const call = (global.fetch as jest.Mock).mock.calls[0];
 		const fetchedUrl = (call[0] as URL).href;
 
-		expect(fetchedUrl).toBe(
-			"http://example.com/api/posts/789/comments",
-		);
+		expect(fetchedUrl).toBe("http://example.com/api/posts/789/comments");
 
 		expect(res.status).toBe(200);
 		expect(data.comments).toBeDefined();

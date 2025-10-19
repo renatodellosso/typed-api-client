@@ -5,7 +5,9 @@ import { GET, POST } from "./src/helpers";
 const apiSchema = {
 	user: {
 		profile: {
-			get: GET<{ name: string }>(),
+			get: GET<{ name: string }, z.ZodString>({
+				searchParamSchema: z.string(),
+			}),
 			post: POST<{ name: string }, z.ZodObject<{ id: z.ZodString }>, undefined>(
 				{
 					bodySchema: z.object({ id: z.string() }),

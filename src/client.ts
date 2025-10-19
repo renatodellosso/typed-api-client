@@ -1,6 +1,6 @@
 // goal: api.resource(dynamicRoute).create(data)
 
-import { ZodObject, ZodType } from "zod";
+import { ZodType } from "zod";
 import { finalizeEndpoint, Endpoint, isEndpoint } from "./endpoint";
 
 export class ApiClient<TSchema extends ApiSchema> {
