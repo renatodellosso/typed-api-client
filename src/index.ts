@@ -32,19 +32,38 @@ export interface ApiSchema {
 }
 
 export type Resource = {
-	[subroute: string]: Resource | Endpoint<any, any>;
+	[subroute: string]: Resource | DynamicResource | Endpoint<any, any, any>;
 };
 
-interface EndpointFunction<TReturn, TSchema extends ZodObject | undefined> {
+export type DynamicResource = {
+	url: string;
+	[subroute: string]:
+		| Resource
+		| DynamicResource
+		| Endpoint<any, any, any>
+		| string;
+};
+
+interface EndpointFunction<
+	TReturn,
+	TBodySchema extends ZodObject | undefined,
+	TSearchParamSchema extends ZodObject | undefined,
+> {
 	(
-		data: TSchema extends ZodObject ? TSchema["_zod"]["input"] : unknown,
+		body: TBodySchema extends ZodObject
+			? TBodySchema["_zod"]["input"]
+			: undefined,
+		searchParams: TSearchParamSchema extends ZodObject
+			? TSearchParamSchema["_zod"]["input"]
+			: undefined,
 	): Promise<TReturn>;
 }
 
 export type Endpoint<
 	TReturn,
 	TSchema extends ZodObject | undefined,
-> = EndpointFunction<ApiResponse<TReturn>, TSchema> & {
+	TSearchParamSchema extends ZodObject | undefined,
+> = EndpointFunction<ApiResponse<TReturn>, TSchema, TSearchParamSchema> & {
 	url?: string;
 	schema: TSchema;
 };
@@ -53,47 +72,97 @@ export type ApiResponse<TReturn> = Omit<Response, "json"> & {
 	json: () => Promise<TReturn>;
 };
 
-function endpointMethod<TReturn, TSchema extends ZodObject | undefined>(
-	schema: TSchema,
+function fetchWrapper(
+	url: string,
 	method: "GET" | "POST" | "PUT" | "DELETE",
-): Endpoint<TReturn, TSchema> {
+	body?: any,
+) {
+	return globalThis.fetch(url, {
+		method,
+		headers: {
+			"Content-Type": "application/json",
+		},
+		body: body ? JSON.stringify(body) : undefined,
+	});
+}
+
+function endpointMethod<
+	TReturn,
+	TBodySchema extends ZodObject | undefined,
+	TSearchParamSchema extends ZodObject | undefined,
+>(
+	method: "GET" | "POST" | "PUT" | "DELETE",
+	bodySchema: TBodySchema,
+	searchParamSchema: TSearchParamSchema,
+): Endpoint<TReturn, TBodySchema, TSearchParamSchema> {
 	const endpoint = async (
-		data: TSchema extends ZodObject ? TSchema["_zod"]["input"] : unknown,
+		data: TBodySchema extends ZodObject
+			? TBodySchema["_zod"]["input"]
+			: undefined,
 	) => {
-		const parsedData = schema?.parse(data);
-		return fetch("http://example.com/api", {
-			method,
-			headers: {
-				"Content-Type": "application/json",
-			},
-			body: JSON.stringify(parsedData),
-		}).then((res) => ({
+		return fetchWrapper("http://example.com/api", method, data).then((res) => ({
 			...res,
 			json: () => res.json() as Promise<TReturn>,
 		})) as Promise<ApiResponse<TReturn>>;
 	};
 
-	return Object.assign(endpoint, { schema });
+	return Object.assign(endpoint, { schema: bodySchema });
 }
 
-export function GET<TReturn>(): Endpoint<TReturn, undefined> {
-	return endpointMethod<TReturn, undefined>(undefined, "GET");
+export function GET<
+	TReturn,
+	TSearchParamSchema extends ZodObject | undefined = undefined,
+>(
+	searchParamSchema: TSearchParamSchema,
+): Endpoint<TReturn, undefined, TSearchParamSchema> {
+	return endpointMethod<TReturn, undefined, TSearchParamSchema>(
+		"GET",
+		undefined,
+		searchParamSchema,
+	);
 }
 
-export function POST<TReturn, TSchema extends ZodObject>(
-	schema: TSchema,
-): Endpoint<TReturn, TSchema> {
-	return endpointMethod<TReturn, TSchema>(schema, "POST");
+export function POST<
+	TReturn,
+	TBodySchema extends ZodObject | undefined = undefined,
+	TSearchParamSchema extends ZodObject | undefined = undefined,
+>(
+	bodySchema: TBodySchema,
+	searchParamSchema: TSearchParamSchema,
+): Endpoint<TReturn, TBodySchema, TSearchParamSchema> {
+	return endpointMethod<TReturn, TBodySchema, TSearchParamSchema>(
+		"POST",
+		bodySchema,
+		searchParamSchema,
+	);
 }
 
-export function PUT<TReturn, TSchema extends ZodObject>(
-	schema: TSchema,
-): Endpoint<TReturn, TSchema> {
-	return endpointMethod<TReturn, TSchema>(schema, "PUT");
+export function PUT<
+	TReturn,
+	TBodySchema extends ZodObject | undefined = undefined,
+	TSearchParamSchema extends ZodObject | undefined = undefined,
+>(
+	bodySchema: TBodySchema,
+	searchParamSchema: TSearchParamSchema,
+): Endpoint<TReturn, TBodySchema, TSearchParamSchema> {
+	return endpointMethod<TReturn, TBodySchema, TSearchParamSchema>(
+		"PUT",
+		bodySchema,
+		searchParamSchema,
+	);
 }
 
-export function DELETE<TReturn, TSchema extends ZodObject>(
-	schema: TSchema,
-): Endpoint<TReturn, TSchema> {
-	return endpointMethod<TReturn, TSchema>(schema, "DELETE");
+export function DELETE<
+	TReturn,
+	TBodySchema extends ZodObject | undefined = undefined,
+	TSearchParamSchema extends ZodObject | undefined = undefined,
+>(
+	bodySchema: TBodySchema,
+	searchParamSchema: TSearchParamSchema,
+): Endpoint<TReturn, TBodySchema, TSearchParamSchema> {
+	return endpointMethod<TReturn, TBodySchema, TSearchParamSchema>(
+		"DELETE",
+		bodySchema,
+		searchParamSchema,
+	);
 }

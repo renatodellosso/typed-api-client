@@ -64,4 +64,44 @@ describe("ApiClient", () => {
 		expect(res.status).toBe(200);
 		expect(data.name).toBe("John Doe");
 	});
+
+	it("allows GET requests with params", async () => {
+		// Mock fetch globally
+		global.fetch = jest.fn(() =>
+			Promise.resolve({
+				ok: true,
+				status: 200,
+				json: () => Promise.resolve({ name: "Jane Doe" }),
+			} as Response),
+		) as jest.Mock;
+
+		const apiSchema = {
+			user: {
+				profile: {
+					get: GET<{ name: string }>(),
+				},
+			},
+		} satisfies ApiSchema;
+
+		const api = new ApiClient<typeof apiSchema>(
+			apiSchema,
+			"http://example.com/api",
+		);
+
+		const res = await api.user.profile.get();
+		const data = await res.json();
+
+		expect(global.fetch).toHaveBeenCalledWith(
+			"http://example.com/api",
+			expect.objectContaining({
+				method: "GET",
+				headers: {
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify({ userId: "456" }),
+			}),
+		);
+		expect(res.status).toBe(200);
+		expect(data.name).toBe("Jane Doe");
+	});
 });
