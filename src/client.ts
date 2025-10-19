@@ -1,7 +1,6 @@
-// goal: api.route(dynamicRoute).create(data)
-
 import { ZodType } from "zod";
 import { finalizeEndpoint, Endpoint, isEndpoint } from "./endpoint";
+import { StandardSchemaV1 } from "@standard-schema/spec";
 
 export function initApiClient<TSchema extends ApiSchema>(
 	schema: TSchema,
@@ -14,7 +13,7 @@ function populateUrls(route: any, baseUrl: string) {
 	for (const key in route) {
 		const item = route[key];
 
-		if (item instanceof ZodType) {
+		if (isValidator(item)) {
 			continue; // Skip Zod schemas
 		}
 
@@ -39,6 +38,10 @@ function populateUrls(route: any, baseUrl: string) {
 	}
 }
 
+function isValidator(obj: any): obj is StandardSchemaV1 {
+	return obj != undefined && "~standard" in obj;
+}
+
 export interface ApiSchema {
 	[route: string]: Route;
 }
@@ -48,24 +51,24 @@ export type Route = {
 		| Route
 		| UnfilledDynamicRoute<any, any>
 		| Endpoint<any, any, any>
-		| ZodType;
+		| StandardSchemaV1;
 };
 
 export type UnfilledDynamicRoute<
 	TRoute extends Route,
-	TSchema extends ZodType,
+	TSchema extends StandardSchemaV1,
 > = {
 	[subroute: string]: TRoute[string] | TSchema;
 	dynamicRouteSchema: TSchema;
-	(path: TSchema["_zod"]["input"]): TRoute;
+	(path: StandardSchemaV1.InferInput<TSchema>): TRoute;
 };
 
 function fillDynamicRoute<
 	TRoute extends Route,
-	TSchema extends ZodType,
+	TSchema extends StandardSchemaV1,
 >(
 	route: UnfilledDynamicRoute<TRoute, TSchema>,
-	dynamicPath: TSchema["_zod"]["input"],
+	dynamicPath: StandardSchemaV1.InferInput<TSchema>,
 	baseUrl: string,
 ): TRoute {
 	const filledRoute: TRoute = {
@@ -77,7 +80,7 @@ function fillDynamicRoute<
 	return filledRoute;
 }
 
-export class PartialDynamicRoute<TSchema extends ZodType> {
+export class PartialDynamicRoute<TSchema extends StandardSchemaV1> {
 	constructor(private readonly schema: TSchema) {}
 
 	with<TRoute extends Route>(
@@ -90,20 +93,19 @@ export class PartialDynamicRoute<TSchema extends ZodType> {
 	}
 }
 
-export function dynamicRoute<TSchema extends ZodType>(schema: TSchema) {
+export function dynamicRoute<TSchema extends StandardSchemaV1>(
+	schema: TSchema,
+) {
 	return new PartialDynamicRoute<TSchema>(schema);
 }
 
 function finalizeDynamicRoute<
 	TRoute extends Route,
-	TSchema extends ZodType,
->(
-	route: UnfilledDynamicRoute<TRoute, TSchema>,
-	baseUrl: string,
-): Route {
+	TSchema extends StandardSchemaV1,
+>(route: UnfilledDynamicRoute<TRoute, TSchema>, baseUrl: string): Route {
 	function fill(
 		this: UnfilledDynamicRoute<TRoute, TSchema>,
-		dynamicPath: TSchema["_zod"]["input"],
+		dynamicPath: StandardSchemaV1.InferInput<TSchema>,
 	) {
 		return fillDynamicRoute(
 			route as UnfilledDynamicRoute<TRoute, TSchema>,
@@ -129,5 +131,5 @@ function finalizeDynamicRoute<
 function isUnfilledDynamicRoute(
 	obj: any,
 ): obj is UnfilledDynamicRoute<any, any> {
-	return obj.dynamicRouteSchema instanceof ZodType;
+	return isValidator(obj.dynamicRouteSchema);
 }
