@@ -3,18 +3,11 @@
 import { ZodType } from "zod";
 import { finalizeEndpoint, Endpoint, isEndpoint } from "./endpoint";
 
-export class ApiClient<TSchema extends ApiSchema> {
-	[resource: string]: TSchema[keyof TSchema];
-
-	constructor(schema: TSchema, baseUrl: string) {
-		// Copy the schema structure to this instance
-		for (const key in schema) {
-			(this[key] as any) = schema[key];
-		}
-
-		// Populate URLs for each endpoint
-		populateUrls(this, baseUrl);
-	}
+export function initApiClient<TSchema extends ApiSchema>(
+	schema: TSchema,
+	baseUrl: string,
+) {
+	populateUrls(schema, baseUrl);
 }
 
 function populateUrls(resource: any, baseUrl: string) {

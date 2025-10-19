@@ -1,10 +1,10 @@
 import z from "zod";
-import { ApiClient, ApiSchema, dynamicResource } from "../src/client";
+import { initApiClient, ApiSchema, dynamicResource } from "../src/client";
 import { GET, POST, PUT } from "../src/helpers";
 
 describe("ApiClient", () => {
 	it("populates URLs", async () => {
-		const apiSchema = {
+		const api = {
 			user: {
 				profile: {
 					post: POST<{ name: string }, z.ZodObject<{ id: z.ZodString }>>({
@@ -14,10 +14,7 @@ describe("ApiClient", () => {
 			},
 		} satisfies ApiSchema;
 
-		const api = new ApiClient<typeof apiSchema>(
-			apiSchema,
-			"http://example.com/api",
-		);
+		initApiClient(api, "http://example.com/api");
 
 		expect(api.user.profile.post.url).toBe(
 			"http://example.com/api/user/profile",
@@ -34,7 +31,7 @@ describe("ApiClient", () => {
 			} as Response),
 		) as jest.Mock;
 
-		const apiSchema = {
+		const api = {
 			user: {
 				profile: {
 					post: POST<{ name: string }, z.ZodObject<{ id: z.ZodString }>>({
@@ -44,10 +41,7 @@ describe("ApiClient", () => {
 			},
 		} satisfies ApiSchema;
 
-		const api = new ApiClient<typeof apiSchema>(
-			apiSchema,
-			"http://example.com/api",
-		);
+		initApiClient(api, "http://example.com/api");
 
 		const res = await api.user.profile.post({ id: "123" });
 		const data = await res.json();
@@ -74,7 +68,7 @@ describe("ApiClient", () => {
 			} as Response),
 		) as jest.Mock;
 
-		const apiSchema = {
+		const api = {
 			user: {
 				profile: {
 					get: GET<{ name: string }, z.ZodObject<{ userId: z.ZodString }>>({
@@ -84,10 +78,7 @@ describe("ApiClient", () => {
 			},
 		} satisfies ApiSchema;
 
-		const api = new ApiClient<typeof apiSchema>(
-			apiSchema,
-			"http://example.com/api",
-		);
+		initApiClient(api, "http://example.com/api");
 
 		const res = await api.user.profile.get({
 			userId: "456",
@@ -112,7 +103,7 @@ describe("ApiClient", () => {
 			} as Response),
 		) as jest.Mock;
 
-		const apiSchema = {
+		const api = {
 			user: {
 				profile: {
 					put: PUT<
@@ -127,10 +118,7 @@ describe("ApiClient", () => {
 			},
 		} satisfies ApiSchema;
 
-		const api = new ApiClient<typeof apiSchema>(
-			apiSchema,
-			"http://example.com/api",
-		);
+		initApiClient(api, "http://example.com/api");
 
 		const res = await api.user.profile.put({ name: "Alice" }, { notify: true });
 		const data = await res.json();
@@ -160,7 +148,7 @@ describe("Dynamic Resource Filling", () => {
 			} as Response),
 		) as jest.Mock;
 
-		const apiSchema = {
+		const api = {
 			posts: {
 				postId: dynamicResource(z.string()).with({
 					comments: {
@@ -170,10 +158,7 @@ describe("Dynamic Resource Filling", () => {
 			},
 		} satisfies ApiSchema;
 
-		const api = new ApiClient<typeof apiSchema>(
-			apiSchema,
-			"http://example.com/api",
-		);
+		initApiClient(api, "http://example.com/api");
 
 		const filledResource = api.posts.postId("789");
 		filledResource.comments.get;

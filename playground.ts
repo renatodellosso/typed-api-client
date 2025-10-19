@@ -1,8 +1,8 @@
 import z from "zod";
-import { ApiClient, ApiSchema, dynamicResource } from "./src/client";
+import { ApiSchema, dynamicResource, initApiClient } from "./src/client";
 import { GET, POST } from "./src/helpers";
 
-const apiSchema = {
+const api = {
 	user: {
 		profile: {
 			get: GET<{ name: string }, z.ZodString>({
@@ -20,10 +20,9 @@ const apiSchema = {
 	},
 } satisfies ApiSchema;
 
-const api = new ApiClient<typeof apiSchema>(
-	apiSchema,
-	"http://example.com/api",
-);
+initApiClient(api, "http://example.com/api");
+
+api.user.profile.get("");
 
 console.log(api.user.profile.get.url);
 
@@ -34,6 +33,6 @@ res.then(async (response) => {
 	});
 });
 
-const schema = apiSchema.user.profile.post.bodySchema;
+const schema = api.user.profile.post.bodySchema;
 
-api.user.profile.id(123);
+api.user.profile.id(123).comments.get;
