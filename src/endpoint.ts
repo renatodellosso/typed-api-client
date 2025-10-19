@@ -9,18 +9,30 @@ export function isEndpoint(obj: any): obj is Endpoint<any, any, any> {
 	);
 }
 
+type ZodToType<T> = T extends ZodObject ? T["_zod"]["input"] : undefined;
+
 interface EndpointFunction<
 	TReturn,
 	TBodySchema extends ZodObject | undefined,
 	TSearchParamSchema extends ZodObject | undefined,
 > {
 	(
-		body: TBodySchema extends ZodObject
-			? TBodySchema["_zod"]["input"]
-			: undefined,
-		searchParams: TSearchParamSchema extends ZodObject
-			? TSearchParamSchema["_zod"]["input"]
-			: undefined,
+		// body: TBodySchema extends ZodObject
+		// 	? TBodySchema["_zod"]["input"]
+		// 	: undefined,
+		// searchParams: TSearchParamSchema extends ZodObject
+		// 	? TSearchParamSchema["_zod"]["input"]
+		// 	: undefined,
+		...args: TBodySchema extends ZodObject
+			? TSearchParamSchema extends ZodObject
+				? [
+						body: ZodToType<TBodySchema>,
+						searchParams: ZodToType<TSearchParamSchema>,
+					]
+				: [body: ZodToType<TBodySchema>]
+			: TSearchParamSchema extends ZodObject
+				? [searchParams: ZodToType<TSearchParamSchema>]
+				: []
 	): Promise<TReturn>;
 }
 
@@ -87,13 +99,14 @@ export function finalizeEndpoint<
 	endpoint: Endpoint<TReturn, TBodySchema, TSearchParamSchema>,
 ): Endpoint<TReturn, TBodySchema, TSearchParamSchema> {
 	const endpointFunc = async (
-		body: TBodySchema extends ZodObject
-			? TBodySchema["_zod"]["input"]
-			: undefined,
-		searchParams: TSearchParamSchema extends ZodObject
-			? TSearchParamSchema["_zod"]["input"]
-			: undefined,
+		body: ZodToType<TBodySchema>,
+		searchParams: ZodToType<TSearchParamSchema>,
 	) => {
+		if (!endpoint.bodySchema && endpoint.searchParamSchema) {
+			// Adjust parameters if only searchParams is defined
+			searchParams = body as unknown as ZodToType<TSearchParamSchema>;
+		}
+
 		return fetchWrapper(
 			endpoint.url || "",
 			endpoint.method,

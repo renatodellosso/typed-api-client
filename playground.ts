@@ -22,7 +22,7 @@ const api = new ApiClient<typeof apiSchema>(
 
 console.log(api.user.profile.get.url);
 
-const res = api.user.profile.post({ id: "123" }, undefined);
+const res = api.user.profile.post({ id: "123" });
 res.then(async (response) => {
 	response.json().then((data) => {
 		data.name;

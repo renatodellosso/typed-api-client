@@ -1,6 +1,6 @@
 import z from "zod";
 import { ApiClient, ApiSchema } from "../src/client";
-import { GET, POST } from "../src/helpers";
+import { GET, POST, PUT } from "../src/helpers";
 
 describe("ApiClient", () => {
 	it("populates URLs", async () => {
@@ -24,7 +24,7 @@ describe("ApiClient", () => {
 		);
 	});
 
-	it("allows requests", async () => {
+	it("allows requests with body", async () => {
 		// Mock fetch globally
 		global.fetch = jest.fn(() =>
 			Promise.resolve({
@@ -49,7 +49,7 @@ describe("ApiClient", () => {
 			"http://example.com/api",
 		);
 
-		const res = await api.user.profile.post({ id: "123" }, undefined);
+		const res = await api.user.profile.post({ id: "123" });
 		const data = await res.json();
 
 		const call = (global.fetch as jest.Mock).mock.calls[0];
@@ -64,7 +64,7 @@ describe("ApiClient", () => {
 		expect(data.name).toBe("John Doe");
 	});
 
-	it("allows GET requests with params", async () => {
+	it("allows GET requests with search params", async () => {
 		// Mock fetch globally
 		global.fetch = jest.fn(() =>
 			Promise.resolve({
@@ -89,7 +89,7 @@ describe("ApiClient", () => {
 			"http://example.com/api",
 		);
 
-		const res = await api.user.profile.get(undefined, {
+		const res = await api.user.profile.get({
 			userId: "456",
 		});
 		const data = await res.json();
@@ -100,5 +100,50 @@ describe("ApiClient", () => {
 
 		expect(res.status).toBe(200);
 		expect(data.name).toBe("Jane Doe");
+	});
+
+	it("allows requests with both body and search params", async () => {
+		// Mock fetch globally
+		global.fetch = jest.fn(() =>
+			Promise.resolve({
+				ok: true,
+				status: 200,
+				json: () => Promise.resolve({ success: true }),
+			} as Response),
+		) as jest.Mock;
+
+		const apiSchema = {
+			user: {
+				profile: {
+					put: PUT<
+						{ success: boolean },
+						z.ZodObject<{ name: z.ZodString }>,
+						z.ZodObject<{ notify: z.ZodBoolean }>
+					>({
+						bodySchema: z.object({ name: z.string() }),
+						searchParamSchema: z.object({ notify: z.boolean() }),
+					}),
+				},
+			},
+		} satisfies ApiSchema;
+
+		const api = new ApiClient<typeof apiSchema>(
+			apiSchema,
+			"http://example.com/api",
+		);
+
+		const res = await api.user.profile.put({ name: "Alice" }, { notify: true });
+		const data = await res.json();
+
+		const call = (global.fetch as jest.Mock).mock.calls[0];
+		const fetchedUrl = (call[0] as URL).href;
+		const fetchOptions = call[1];
+
+		expect(fetchedUrl).toBe("http://example.com/api/user/profile?notify=true");
+		expect(fetchOptions.method).toBe("PUT");
+		expect(fetchOptions.body).toBe(JSON.stringify({ name: "Alice" }));
+
+		expect(res.status).toBe(200);
+		expect(data.success).toBe(true);
 	});
 });
