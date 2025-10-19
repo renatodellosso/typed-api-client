@@ -1,5 +1,5 @@
 import { ZodType } from "zod";
-import { createUnfinalizedEndpoint, Endpoint } from "./endpoint";
+import { createUnfinalizedEndpoint, Endpoint, HttpMethod } from "./endpoint";
 
 export function GET<
 	TReturn,
@@ -8,7 +8,7 @@ export function GET<
 	searchParamSchema?: TSearchParamSchema;
 }): Endpoint<TReturn, undefined, TSearchParamSchema> {
 	return createUnfinalizedEndpoint<TReturn, undefined, TSearchParamSchema>(
-		"GET",
+		HttpMethod.GET,
 		undefined,
 		config?.searchParamSchema,
 	);
@@ -23,7 +23,7 @@ export function POST<
 	searchParamSchema?: TSearchParamSchema;
 }): Endpoint<TReturn, TBodySchema, TSearchParamSchema> {
 	return createUnfinalizedEndpoint<TReturn, TBodySchema, TSearchParamSchema>(
-		"POST",
+		HttpMethod.POST,
 		config?.bodySchema,
 		config?.searchParamSchema,
 	);
@@ -38,7 +38,7 @@ export function PUT<
 	searchParamSchema?: TSearchParamSchema;
 }) {
 	return createUnfinalizedEndpoint<TReturn, TBodySchema, TSearchParamSchema>(
-		"PUT",
+		HttpMethod.PUT,
 		config?.bodySchema,
 		config?.searchParamSchema,
 	);
@@ -53,7 +53,22 @@ export function DELETE<
 	searchParamSchema?: TSearchParamSchema;
 }): Endpoint<TReturn, TBodySchema, TSearchParamSchema> {
 	return createUnfinalizedEndpoint<TReturn, TBodySchema, TSearchParamSchema>(
-		"DELETE",
+		HttpMethod.DELETE,
+		config?.bodySchema,
+		config?.searchParamSchema,
+	);
+}
+
+export function PATCH<
+	TReturn,
+	TBodySchema extends ZodType | undefined = undefined,
+	TSearchParamSchema extends ZodType | undefined = undefined,
+>(config?: {
+	bodySchema?: TBodySchema;
+	searchParamSchema?: TSearchParamSchema;
+}): Endpoint<TReturn, TBodySchema, TSearchParamSchema> {
+	return createUnfinalizedEndpoint<TReturn, TBodySchema, TSearchParamSchema>(
+		HttpMethod.PATCH,
 		config?.bodySchema,
 		config?.searchParamSchema,
 	);

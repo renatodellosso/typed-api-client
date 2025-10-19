@@ -1,11 +1,19 @@
 import { StandardSchemaV1 } from "@standard-schema/spec";
 
+export enum HttpMethod {
+	GET = "GET",
+	POST = "POST",
+	PUT = "PUT",
+	DELETE = "DELETE",
+	PATCH = "PATCH",
+}
+
 export function isEndpoint(obj: any): obj is Endpoint<any, any, any> {
 	return (
 		obj &&
 		typeof obj === "object" &&
 		typeof obj.method === "string" &&
-		["GET", "POST", "PUT", "DELETE"].includes(obj.method.toUpperCase())
+		Object.values(HttpMethod).includes(obj.method.toUpperCase())
 	);
 }
 
@@ -34,7 +42,7 @@ export type Endpoint<
 	TBodySchema extends StandardSchemaV1 | undefined,
 	TSearchParamSchema extends StandardSchemaV1 | undefined,
 > = EndpointFunction<ApiResponse<TReturn>, TBodySchema, TSearchParamSchema> & {
-	method: "GET" | "POST" | "PUT" | "DELETE";
+	method: HttpMethod;
 	url?: string;
 	bodySchema?: TBodySchema;
 	searchParamSchema?: TSearchParamSchema;
@@ -46,7 +54,7 @@ export type ApiResponse<TReturn> = Omit<Response, "json"> & {
 
 function fetchWrapper(
 	url: string,
-	method: "GET" | "POST" | "PUT" | "DELETE",
+	method: HttpMethod,
 	body?: any,
 	searchParams?: any,
 ) {
@@ -71,7 +79,7 @@ export function createUnfinalizedEndpoint<
 	TBodySchema extends StandardSchemaV1 | undefined,
 	TSearchParamSchema extends StandardSchemaV1 | undefined,
 >(
-	method: "GET" | "POST" | "PUT" | "DELETE",
+	method: HttpMethod,
 	bodySchema?: TBodySchema,
 	searchParamSchema?: TSearchParamSchema,
 ): Endpoint<TReturn, TBodySchema, TSearchParamSchema> {
