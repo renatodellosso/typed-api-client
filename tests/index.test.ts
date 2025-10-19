@@ -6,9 +6,9 @@ describe("ApiClient", () => {
 		const apiSchema = {
 			user: {
 				profile: {
-					post: POST<{ name: string }, z.ZodObject<{ id: z.ZodString }>>(
-						z.object({ id: z.string() }),
-					),
+					post: POST<{ name: string }, z.ZodObject<{ id: z.ZodString }>>({
+						bodySchema: z.object({ id: z.string() }),
+					}),
 				},
 			},
 		} satisfies ApiSchema;
@@ -19,7 +19,7 @@ describe("ApiClient", () => {
 		);
 
 		expect(api.user.profile.post.url).toBe(
-			"http://example.com/api/user/profile/post",
+			"http://example.com/api/user/profile",
 		);
 	});
 
@@ -36,9 +36,9 @@ describe("ApiClient", () => {
 		const apiSchema = {
 			user: {
 				profile: {
-					post: POST<{ name: string }, z.ZodObject<{ id: z.ZodString }>>(
-						z.object({ id: z.string() }),
-					),
+					post: POST<{ name: string }, z.ZodObject<{ id: z.ZodString }>>({
+						bodySchema: z.object({ id: z.string() }),
+					}),
 				},
 			},
 		} satisfies ApiSchema;
@@ -48,19 +48,17 @@ describe("ApiClient", () => {
 			"http://example.com/api",
 		);
 
-		const res = await api.user.profile.post({ id: "123" });
+		const res = await api.user.profile.post({ id: "123" }, undefined);
 		const data = await res.json();
 
-		expect(global.fetch).toHaveBeenCalledWith(
-			"http://example.com/api",
-			expect.objectContaining({
-				method: "POST",
-				headers: {
-					"Content-Type": "application/json",
-				},
-				body: JSON.stringify({ id: "123" }),
-			}),
-		);
+		const call = (global.fetch as jest.Mock).mock.calls[0];
+		const fetchedUrl = (call[0] as URL).href;
+		const fetchOptions = call[1];
+
+		expect(fetchedUrl).toBe("http://example.com/api/user/profile");
+		expect(fetchOptions.method).toBe("POST");
+		expect(fetchOptions.body).toBe(JSON.stringify({ id: "123" }));
+
 		expect(res.status).toBe(200);
 		expect(data.name).toBe("John Doe");
 	});
@@ -78,7 +76,9 @@ describe("ApiClient", () => {
 		const apiSchema = {
 			user: {
 				profile: {
-					get: GET<{ name: string }>(),
+					get: GET<{ name: string }, z.ZodObject<{ userId: z.ZodString }>>({
+						searchParamSchema: z.object({ userId: z.string() }),
+					}),
 				},
 			},
 		} satisfies ApiSchema;
@@ -88,19 +88,15 @@ describe("ApiClient", () => {
 			"http://example.com/api",
 		);
 
-		const res = await api.user.profile.get();
+		const res = await api.user.profile.get(undefined, {
+			userId: "456",
+		});
 		const data = await res.json();
 
-		expect(global.fetch).toHaveBeenCalledWith(
-			"http://example.com/api",
-			expect.objectContaining({
-				method: "GET",
-				headers: {
-					"Content-Type": "application/json",
-				},
-				body: JSON.stringify({ userId: "456" }),
-			}),
-		);
+		const call = (global.fetch as jest.Mock).mock.calls[0];
+		const fetchedUrl = (call[0] as URL).href;
+		expect(fetchedUrl).toBe("http://example.com/api/user/profile?userId=456");
+
 		expect(res.status).toBe(200);
 		expect(data.name).toBe("Jane Doe");
 	});
