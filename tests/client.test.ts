@@ -1,5 +1,5 @@
 import z from "zod";
-import { ApiClient, ApiSchema } from "../src/client";
+import { ApiClient, ApiSchema, dynamicResource } from "../src/client";
 import { GET, POST, PUT } from "../src/helpers";
 
 describe("ApiClient", () => {
@@ -145,5 +145,53 @@ describe("ApiClient", () => {
 
 		expect(res.status).toBe(200);
 		expect(data.success).toBe(true);
+	});
+});
+
+describe("Dynamic Resource Filling", () => {
+	it("fills dynamic resource paths correctly", async () => {
+		// Mock fetch globally
+		global.fetch = jest.fn(() =>
+			Promise.resolve({
+				ok: true,
+				status: 200,
+				json: () => Promise.resolve({ comments: ["Great post!", "Thanks for sharing."] }),
+			} as Response),
+		) as jest.Mock;
+
+		const apiSchema = {
+			posts: {
+				postId: dynamicResource(z.string(), {
+					comments: {
+						get: GET<{ comments: string[] }>(),
+					},
+				}),
+			},
+		} satisfies ApiSchema;
+
+		const api = new ApiClient<typeof apiSchema>(
+			apiSchema,
+			"http://example.com/api",
+		);
+
+		const filledResource = api.posts.postId("789");
+		filledResource.comments.get;
+
+		expect(filledResource.comments.get.url).toBe(
+			"http://example.com/api/posts/789/comments",
+		);
+
+		const res = await filledResource.comments.get();
+		const data = await res.json();
+
+		const call = (global.fetch as jest.Mock).mock.calls[0];
+		const fetchedUrl = (call[0] as URL).href;
+
+		expect(fetchedUrl).toBe(
+			"http://example.com/api/posts/789/comments",
+		);
+
+		expect(res.status).toBe(200);
+		expect(data.comments).toBeDefined();
 	});
 });
