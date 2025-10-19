@@ -1,5 +1,6 @@
 import z from "zod";
-import { ApiClient, ApiSchema, GET, POST } from "../src";
+import { ApiClient, ApiSchema } from "../src/client";
+import { GET, POST } from "../src/helpers";
 
 describe("ApiClient", () => {
 	it("populates URLs", async () => {
