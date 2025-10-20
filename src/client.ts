@@ -17,18 +17,10 @@ function populateUrls(route: any, baseUrl: string) {
 			continue; // Skip Zod schemas
 		}
 
-		console.log(
-			"Populating URL for:",
-			key,
-			baseUrl,
-			isUnfilledDynamicRoute(item),
-		);
-
 		if (isEndpoint(item)) {
 			item.url = baseUrl;
 			route[key] = finalizeEndpoint(item);
 		} else if (isUnfilledDynamicRoute(item)) {
-			console.log("Populating dynamic route:", key, baseUrl);
 			route[key] = finalizeDynamicRoute(item, baseUrl);
 		} else if (typeof item === "object" && item !== null) {
 			populateUrls(item, `${baseUrl}/${key}`);
