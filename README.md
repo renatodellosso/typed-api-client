@@ -79,3 +79,5 @@ const userComments = await api.user.profile.id(42).comments.get();
 ```
 
 This will create a route like `/user/profile/42/comments` where `42` is a dynamic segment. The type of the dynamic segment is enforced by the schema provided to `dynamicRoute`.
+
+Dynamic routes have to be within a regular route (i.e., you cannot have a dynamic route at the root of the API).
