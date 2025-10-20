@@ -35,7 +35,7 @@ function isValidator(obj: any): obj is StandardSchemaV1 {
 }
 
 export interface ApiSchema {
-	[route: string]: Route;
+	[route: string]: Route | UnfilledDynamicRoute<any, any>;
 }
 
 export type Route = {

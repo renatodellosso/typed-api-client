@@ -36,3 +36,14 @@ res.then(async (response) => {
 const schema = api.user.profile.post.bodySchema;
 
 api.user.profile.id(123).comments.get;
+
+const api2 = {
+	serverState: {
+		get: GET<number>(),
+	},
+	containers: dynamicRoute(z.string()).with({
+		status: {
+			get: GET<number>(),
+		},
+	}),
+} satisfies ApiSchema;
