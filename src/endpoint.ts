@@ -66,8 +66,6 @@ function fetchWrapper(
 		}
 	}
 
-	console.log("Fetching URL:", urlObj.toString(), "Body:", body);
-
 	return globalThis.fetch(urlObj, {
 		method,
 		headers: {
