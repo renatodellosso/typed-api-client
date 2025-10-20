@@ -5,8 +5,10 @@ import { GET, POST } from "./src/helpers";
 const api = {
 	user: {
 		profile: {
-			get: GET<{ name: string }, z.ZodString>({
-				searchParamSchema: z.string(),
+			get: GET<{ name: string }, z.ZodObject<{ id: z.ZodString }>>({
+				searchParamSchema: z.object({
+					id: z.string(),
+				}),
 			}),
 			post: POST<{ name: string }, z.ZodObject<{ id: z.ZodString }>>({
 				bodySchema: z.object({ id: z.string() }),
@@ -22,7 +24,7 @@ const api = {
 
 initApiClient(api, "http://example.com/api");
 
-api.user.profile.get("");
+api.user.profile.get({ id: "123" });
 
 console.log(api.user.profile.get.url);
 

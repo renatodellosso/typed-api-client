@@ -1,9 +1,9 @@
-import { ZodType } from "zod";
 import { createUnfinalizedEndpoint, Endpoint, HttpMethod } from "./endpoint";
+import { StandardSchemaV1 } from "@standard-schema/spec";
 
 export function GET<
 	TReturn,
-	TSearchParamSchema extends ZodType | undefined = undefined,
+	TSearchParamSchema extends StandardSchemaV1<object> | undefined = undefined,
 >(config?: {
 	searchParamSchema?: TSearchParamSchema;
 }): Endpoint<TReturn, undefined, TSearchParamSchema> {
@@ -16,8 +16,8 @@ export function GET<
 
 export function POST<
 	TReturn,
-	TBodySchema extends ZodType | undefined = undefined,
-	TSearchParamSchema extends ZodType | undefined = undefined,
+	TBodySchema extends StandardSchemaV1<object> | undefined = undefined,
+	TSearchParamSchema extends StandardSchemaV1<object> | undefined = undefined,
 >(config?: {
 	bodySchema?: TBodySchema;
 	searchParamSchema?: TSearchParamSchema;
@@ -31,8 +31,8 @@ export function POST<
 
 export function PUT<
 	TReturn,
-	TBodySchema extends ZodType | undefined = undefined,
-	TSearchParamSchema extends ZodType | undefined = undefined,
+	TBodySchema extends StandardSchemaV1<object> | undefined = undefined,
+	TSearchParamSchema extends StandardSchemaV1<object> | undefined = undefined,
 >(config?: {
 	bodySchema?: TBodySchema;
 	searchParamSchema?: TSearchParamSchema;
@@ -46,8 +46,8 @@ export function PUT<
 
 export function DELETE<
 	TReturn,
-	TBodySchema extends ZodType | undefined = undefined,
-	TSearchParamSchema extends ZodType | undefined = undefined,
+	TBodySchema extends StandardSchemaV1<object> | undefined = undefined,
+	TSearchParamSchema extends StandardSchemaV1<object> | undefined = undefined,
 >(config?: {
 	bodySchema?: TBodySchema;
 	searchParamSchema?: TSearchParamSchema;
@@ -61,8 +61,8 @@ export function DELETE<
 
 export function PATCH<
 	TReturn,
-	TBodySchema extends ZodType | undefined = undefined,
-	TSearchParamSchema extends ZodType | undefined = undefined,
+	TBodySchema extends StandardSchemaV1<object> | undefined = undefined,
+	TSearchParamSchema extends StandardSchemaV1<object> | undefined = undefined,
 >(config?: {
 	bodySchema?: TBodySchema;
 	searchParamSchema?: TSearchParamSchema;

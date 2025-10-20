@@ -1,7 +1,5 @@
-import { ZodType } from "zod";
 import { finalizeEndpoint, Endpoint, isEndpoint } from "./endpoint";
 import { StandardSchemaV1 } from "@standard-schema/spec";
-import { fi } from "zod/v4/locales";
 
 export function initApiClient<TSchema extends ApiSchema>(
 	schema: TSchema,

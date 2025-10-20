@@ -195,6 +195,12 @@ describe("Dynamic Route Filling", () => {
 				postId: dynamicRoute(z.string()).with({
 					comments: {
 						get: GET<{ comments: string[] }>(),
+						post: POST<
+							{ success: boolean },
+							z.ZodObject<{ content: z.ZodString }>
+						>({
+							bodySchema: z.object({ content: z.string() }),
+						}),
 					},
 				}),
 			},
@@ -208,12 +214,12 @@ describe("Dynamic Route Filling", () => {
 		expect(filledRoute1.comments.get.url).toBe(
 			"http://example.com/api/posts/101/comments",
 		);
-		expect(filledRoute2.comments.get.url).toBe(
+		expect(filledRoute2.comments.post.url).toBe(
 			"http://example.com/api/posts/202/comments",
 		);
 
-		let res = await filledRoute1.comments.get();
-		let data = await res.json();
+		let res: Response = await filledRoute1.comments.get();
+		let data: any = await res.json();
 
 		let call = (global.fetch as jest.Mock).mock.calls[0];
 		let fetchedUrl = (call[0] as URL).href;
@@ -223,7 +229,7 @@ describe("Dynamic Route Filling", () => {
 		expect(res.status).toBe(200);
 		expect(data.comments).toBeDefined();
 
-		res = await filledRoute2.comments.get();
+		res = await filledRoute2.comments.post({ content: "New comment!" });
 		data = await res.json();
 
 		call = (global.fetch as jest.Mock).mock.calls[1];
