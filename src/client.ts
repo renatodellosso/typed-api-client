@@ -1,6 +1,7 @@
 import { ZodType } from "zod";
 import { finalizeEndpoint, Endpoint, isEndpoint } from "./endpoint";
 import { StandardSchemaV1 } from "@standard-schema/spec";
+import { fi } from "zod/v4/locales";
 
 export function initApiClient<TSchema extends ApiSchema>(
 	schema: TSchema,
@@ -55,6 +56,39 @@ export type UnfilledDynamicRoute<
 	(path: StandardSchemaV1.InferInput<TSchema>): TRoute;
 };
 
+/**
+ * Deep copies a dynamic route without filling in the dynamic path.
+ */
+function copyRoute<TRoute extends Route, TSchema extends StandardSchemaV1>(
+	route: UnfilledDynamicRoute<TRoute, TSchema>,
+): TRoute {
+	const newRoute = {} as TRoute;
+
+	for (const key in route) {
+		if (key === "dynamicRouteSchema") {
+			continue;
+		}
+
+		const item = route[key];
+
+		if (isValidator(item)) {
+			(newRoute as any)[key] = item;
+		} else if (isEndpoint(item)) {
+			(newRoute as any)[key] = { ...item };
+		} else if (isUnfilledDynamicRoute(item)) {
+			(newRoute as any)[key] = copyRoute(item);
+		} else if (typeof item === "object" && item !== null) {
+			(newRoute as any)[key] = copyRoute(
+				item as UnfilledDynamicRoute<any, any>,
+			);
+		} else {
+			throw new Error(`Invalid schema item at dynamic route copy: ${item}`);
+		}
+	}
+
+	return newRoute;
+}
+
 function fillDynamicRoute<
 	TRoute extends Route,
 	TSchema extends StandardSchemaV1,
@@ -63,9 +97,7 @@ function fillDynamicRoute<
 	dynamicPath: StandardSchemaV1.InferInput<TSchema>,
 	baseUrl: string,
 ): TRoute {
-	const filledRoute: TRoute = {
-		...route,
-	} as unknown as TRoute;
+	const filledRoute = copyRoute(route);
 
 	populateUrls(filledRoute, `${baseUrl}/${dynamicPath}`);
 

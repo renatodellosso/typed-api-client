@@ -1,6 +1,6 @@
 import z from "zod";
 import { initApiClient, ApiSchema, dynamicRoute } from "../src/client";
-import { GET, POST, PUT } from "../src/helpers";
+import { GET, PATCH, POST, PUT } from "../src/helpers";
 
 describe("ApiClient", () => {
 	it("populates URLs", async () => {
@@ -174,6 +174,62 @@ describe("Dynamic Route Filling", () => {
 		const fetchedUrl = (call[0] as URL).href;
 
 		expect(fetchedUrl).toBe("http://example.com/api/posts/789/comments");
+
+		expect(res.status).toBe(200);
+		expect(data.comments).toBeDefined();
+	});
+
+	it("allows filling routes multiple times", async () => {
+		// Mock fetch globally
+		global.fetch = jest.fn(() =>
+			Promise.resolve({
+				ok: true,
+				status: 200,
+				json: () =>
+					Promise.resolve({ comments: ["Interesting read.", "Loved it!"] }),
+			} as Response),
+		) as jest.Mock;
+
+		const api = {
+			posts: {
+				postId: dynamicRoute(z.string()).with({
+					comments: {
+						get: GET<{ comments: string[] }>(),
+					},
+				}),
+			},
+		} satisfies ApiSchema;
+
+		initApiClient(api, "http://example.com/api");
+
+		const filledRoute1 = api.posts.postId("101");
+		const filledRoute2 = api.posts.postId("202");
+
+		expect(filledRoute1.comments.get.url).toBe(
+			"http://example.com/api/posts/101/comments",
+		);
+		expect(filledRoute2.comments.get.url).toBe(
+			"http://example.com/api/posts/202/comments",
+		);
+
+		let res = await filledRoute1.comments.get();
+		let data = await res.json();
+
+		let call = (global.fetch as jest.Mock).mock.calls[0];
+		let fetchedUrl = (call[0] as URL).href;
+
+		expect(fetchedUrl).toBe("http://example.com/api/posts/101/comments");
+
+		expect(res.status).toBe(200);
+		expect(data.comments).toBeDefined();
+
+		res = await filledRoute2.comments.get();
+		data = await res.json();
+
+		call = (global.fetch as jest.Mock).mock.calls[1];
+		fetchedUrl = (call[0] as URL).href;
+
+		expect(fetchedUrl).toBe("http://example.com/api/posts/202/comments");
 
 		expect(res.status).toBe(200);
 		expect(data.comments).toBeDefined();
