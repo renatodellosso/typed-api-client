@@ -25,7 +25,7 @@ function populateUrls(route: any, baseUrl: string) {
 		} else if (typeof item === "object" && item !== null) {
 			populateUrls(item, `${baseUrl}/${key}`);
 		} else {
-			throw new Error(`Invalid schema item at ${baseUrl}/${key}`);
+			throw new Error(`Invalid schema item at ${baseUrl}/${key}: ${item}`);
 		}
 	}
 }

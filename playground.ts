@@ -43,7 +43,12 @@ const api2 = {
 	},
 	containers: dynamicRoute(z.string()).with({
 		status: {
-			get: GET<number>(),
+			patch: POST<
+				{ success: boolean },
+				z.ZodObject<{ updatedAt: z.ZodString }>
+			>({
+				bodySchema: z.object({ updatedAt: z.string() }),
+			}),
 		},
 	}),
 } satisfies ApiSchema;
